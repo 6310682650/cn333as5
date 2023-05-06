@@ -2,6 +2,7 @@ package com.example.phonebook.domain.model
 
 import com.example.phonebook.database.ColorDbModel
 
+
 data class ColorModel(
     val id: Long,
     val name: String,

@@ -1,12 +1,14 @@
 package com.example.phonebook.screens
 
 import android.annotation.SuppressLint
+import android.nfc.Tag
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -67,6 +69,9 @@ fun SaveNoteScreen(viewModel: MainViewModel) {
                 },
                 onDeleteNoteClick = {
                     moveNoteToTrashDialogShownState.value = true
+                },
+                onOpenTagPickerClick = {
+                    coroutineScope.launch { bottomDrawerState.open()}
                 }
             )
         }
@@ -129,7 +134,8 @@ fun SaveNoteTopAppBar(
     onBackClick: () -> Unit,
     onSaveNoteClick: () -> Unit,
     onOpenColorPickerClick: () -> Unit,
-    onDeleteNoteClick: () -> Unit
+    onDeleteNoteClick: () -> Unit,
+    onOpenTagPickerClick: () -> Unit,
 ) {
     TopAppBar(
         title = {
@@ -155,6 +161,14 @@ fun SaveNoteTopAppBar(
                     tint = MaterialTheme.colors.onPrimary
                 )
             }
+
+//            IconButton(onClick = onOpenTagPickerClick) {
+//                Icon(
+//                    painter = painterResource(id = R.drawable.baseline_tag_24),
+//                    contentDescription = "Open Tag Picker Button",
+//                    tint = MaterialTheme.colors.onPrimary
+//                )
+//            }
 
             IconButton(onClick = onOpenColorPickerClick) {
                 Icon(
@@ -202,17 +216,7 @@ private fun SaveNoteContent(
             }
         )
 
-        val canBeCheckedOff: Boolean = note.isCheckedOff != null
-
-//        NoteCheckOption(
-//            isChecked = canBeCheckedOff,
-//            onCheckedChange = { canBeCheckedOffNewValue ->
-//                val isCheckedOff: Boolean? = if (canBeCheckedOffNewValue) false else null
-//
-//                onNoteChange.invoke(note.copy(isCheckedOff = isCheckedOff))
-//            }
-//        )
-
+        DropdownType()
         PickedColor(color = note.color)
     }
 }
@@ -237,45 +241,101 @@ private fun ContentTextField(
     )
 }
 
-//val tagList = listOf("Mobile", "Home", "Work", "Other")
-//@OptIn(ExperimentalMaterialApi::class)
-//@Composable
-//private fun TagTpye() {
-//    Row(Modifier.wrapContentWidth()) {
-//        tagList.forEach { tag ->
-//            Chip(
-//                onClick = { /* Handle chip click */ },
-//                shape = RoundedCornerShape(16.dp),
-//                modifier = Modifier.padding(4.dp)
-//            ) {
-//                Text(text = tag)
-//            }
-//        }
-//    }
-//
-//}
+@Composable
+private fun DropdownType() {
+    val items = listOf("Mobile", "Home", "Work", "Other")
+    val selectedItem = remember { mutableStateOf(items[0]) }
+    val expandedState = remember { mutableStateOf(false) }
 
+    Column (Modifier.padding(16.dp)) {
+        Button(onClick = { expandedState.value = true }) {
+            Text(text = selectedItem.value)
+        }
+
+        DropdownMenu(
+            expanded = expandedState.value,
+            onDismissRequest = { expandedState.value = false }
+        ) {
+            items.forEach { item ->
+                DropdownMenuItem(onClick = {
+                    selectedItem.value = item
+                    expandedState.value = false
+                }) {
+                    Text(text = item)
+                }
+            }
+        }
+    }
+}
+//////////////////
 //@Composable
-//private fun NoteCheckOption(
-//    isChecked: Boolean,
-//    onCheckedChange: (Boolean) -> Unit
-//) {
+//private fun PickedTag(tag: TagModel) {
 //    Row(
 //        Modifier
 //            .padding(8.dp)
 //            .padding(top = 16.dp)
 //    ) {
 //        Text(
-//            text = "Can note be checked off?",
-//            modifier = Modifier.weight(1f)
+//            text = "Picked Tag",
+//            modifier = Modifier
+//                .weight(1f)
+//                .align(Alignment.CenterVertically)
 //        )
-//        Switch(
-//            checked = isChecked,
-//            onCheckedChange = onCheckedChange,
-//            modifier = Modifier.padding(start = 8.dp)
+//        Text(
+//            text = tag.tagtype,
+//            fontSize = 18.sp,
+//            modifier = Modifier
+//                .padding(horizontal = 16.dp)
+//                .align(Alignment.CenterVertically)
 //        )
 //    }
 //}
+//
+//@Composable
+//private fun TagPicker(
+//    tags: List<TagModel>,
+//    onTagSelect: (TagModel) -> Unit
+//) {
+//    Column(modifier = Modifier.fillMaxWidth()) {
+//        Text(
+//            text = "Tag picker",
+//            fontSize = 18.sp,
+//            fontWeight = FontWeight.Bold,
+//            modifier = Modifier.padding(8.dp)
+//        )
+//        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+//            items(tags.size) { itemIndex ->
+//                val tag = tags[itemIndex]
+//                TagItem(tag = tag, onTagSelect = onTagSelect)
+//            }
+//        }
+//    }
+//}
+//
+//@Composable
+//fun TagItem(
+//    tag: TagModel,
+//    onTagSelect: (TagModel) -> Unit
+//) {
+//    Row(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .clickable(
+//                onClick = {
+//                    onTagSelect(tag)
+//                }
+//            )
+//    ) {
+//        Text(
+//            text = tag.tagtype,
+//            fontSize = 22.sp,
+//            modifier = Modifier
+//                .padding(horizontal = 16.dp)
+//                .align(Alignment.CenterVertically)
+//        )
+//    }
+//}
+//////////////////////
 
 @Composable
 private fun PickedColor(color: ColorModel) {
@@ -351,28 +411,4 @@ fun ColorItem(
                 .align(Alignment.CenterVertically)
         )
     }
-}
-
-@Preview
-@Composable
-fun ColorItemPreview() {
-    ColorItem(ColorModel.DEFAULT) {}
-}
-
-@Preview
-@Composable
-fun ColorPickerPreview() {
-    ColorPicker(
-        colors = listOf(
-            ColorModel.DEFAULT,
-            ColorModel.DEFAULT,
-            ColorModel.DEFAULT
-        )
-    ) { }
-}
-
-@Preview
-@Composable
-fun PickedColorPreview() {
-    PickedColor(ColorModel.DEFAULT)
 }

@@ -74,7 +74,7 @@ fun NotesScreen(viewModel: MainViewModel) {
     ) {
         if (notes.isNotEmpty()) {
             NotesList(
-                notes = notes,
+                notes = (notes.sortedBy { it.title }),
                 onNoteCheckedChange = {
                     viewModel.onNoteCheckedChange(it)
                 },
